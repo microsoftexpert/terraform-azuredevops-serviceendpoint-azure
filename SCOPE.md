@@ -1,4 +1,4 @@
-# SCOPE — `tf-mod-azuredevops-serviceendpoint-azure`
+# SCOPE — `terraform-azuredevops-serviceendpoint-azure`
 
 > **Module type:** `composite`  ·  **Provider:** `microsoft/azuredevops` (`>= 1.0, < 2.0`)  ·  **Scope:** project-scoped
 
@@ -16,13 +16,13 @@ Primary resource (`this`): **`azuredevops_serviceendpoint_azurerm`**. Tightly-co
 
 ## Out-of-scope resources (consumed by ID)
 
-- `azuredevops_project` — provided as `project_id` by `tf-mod-azuredevops-project`.
+- `azuredevops_project` — provided as `project_id` by `terraform-azuredevops-project`.
 
 ## Consumes
 
 | Input | Type | Source module |
 |---|---|---|
-| `project_id` | string | `tf-mod-azuredevops-project` |
+| `project_id` | string | `terraform-azuredevops-project` |
 
 ## Required Azure DevOps scopes / auth
 
@@ -40,7 +40,7 @@ Primary resource (`this`): **`azuredevops_serviceendpoint_azurerm`**. Tightly-co
 | Output | Description | Consumed by |
 |---|---|---|
 | `id` | Primary resource ID (`azuredevops_serviceendpoint_azurerm`) | downstream module references |
-| `service_endpoint_id` | Resource-specific ID for cross-module wiring | tf-mod-azuredevops-build-definition, environment, pipeline_checks, serviceendpoint_permissions |
+| `service_endpoint_id` | Resource-specific ID for cross-module wiring | terraform-azuredevops-build-definition, environment, pipeline_checks, serviceendpoint_permissions |
 | `name` | Resource name | logging / audit |
 | _(secrets)_ | **Never emitted** — service-connection / Key Vault secrets are write-only and `sensitive` | n/a |
 

@@ -17,7 +17,7 @@ This module creates and manages:
 - 🔑 **An Azure Resource Manager (ARM) service connection** (`azuredevops_serviceendpoint_azurerm`) — the keystone (`this`) that pipelines reference as `azureSubscription`. Supports **Workload Identity Federation (OIDC)**, **Managed Service Identity**, and **Service Principal** auth schemes, scoped to a subscription or a management group.
 - 📦 **Zero or more Azure Container Registry (ACR) service connections** (`azuredevops_serviceendpoint_azurecr`) — each a `for_each` child binding a registry for image push/pull tasks.
 - 🚌 **Zero or more Azure Service Bus service connections** (`azuredevops_serviceendpoint_azure_service_bus`) — each a `for_each` child carrying a queue name and a connection string for ServiceBus pipeline tasks.
-- 🔗 **Project-scoped wiring** — every endpoint is anchored to a `project_id` sourced from `tf-mod-azuredevops-project`.
+- 🔗 **Project-scoped wiring** — every endpoint is anchored to a `project_id` sourced from `terraform-azuredevops-project`.
 
 > 💡 **Why it matters:** Service connections are how Azure Pipelines authenticate to Azure without scattering credentials through YAML. This module makes the Azure family declarative and consistent, defaults toward **secret-free workload identity federation**, and guarantees that the write-only secrets it does accept (`serviceprincipalkey`, `serviceprincipalcertificate`, `connection_string`) are marked `sensitive` and never surface in plan output, state diffs, or module outputs.
 
@@ -39,12 +39,12 @@ Whether it's a star, a professional connection, or a coffee, every gesture helps
 
 ```mermaid
 flowchart TD
- project["tf-mod-azuredevops-project<br/>(emits project_id)"]
- se["tf-mod-azuredevops-serviceendpoint-azure<br/>(THIS MODULE)"]
- build["tf-mod-azuredevops-build-definition<br/>(service_endpoint_id)"]
- env["tf-mod-azuredevops-environment<br/>(deployment target)"]
- checks["tf-mod-azuredevops-pipeline-checks<br/>(protect the endpoint)"]
- perms["tf-mod-azuredevops-serviceendpoint-permissions"]
+ project["terraform-azuredevops-project<br/>(emits project_id)"]
+ se["terraform-azuredevops-serviceendpoint-azure<br/>(THIS MODULE)"]
+ build["terraform-azuredevops-build-definition<br/>(service_endpoint_id)"]
+ env["terraform-azuredevops-environment<br/>(deployment target)"]
+ checks["terraform-azuredevops-pipeline-checks<br/>(protect the endpoint)"]
+ perms["terraform-azuredevops-serviceendpoint-permissions"]
  fed["azurerm_federated_identity_credential<br/>(hashicorp/azurerm — out of module)"]
 
  project -->|project_id| se
@@ -128,7 +128,7 @@ The Terraform identity authenticates via a **PAT** or an **Entra ID service prin
 ## 📁 Module Structure
 
 ```
-tf-mod-azuredevops-serviceendpoint-azure/
+terraform-azuredevops-serviceendpoint-azure/
 ├── providers.tf # terraform >= 1.12, azuredevops >= 1.0,< 2.0 — no provider{} block
 ├── variables.tf # name → project_id → azurerm_spn_tenantid → ARM config → child maps → timeouts
 ├── main.tf # serviceendpoint_azurerm.this +.azurecr (for_each) +.service_bus (for_each)
@@ -143,10 +143,10 @@ tf-mod-azuredevops-serviceendpoint-azure/
 
 ```hcl
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                                   = "casey-prod-arm"
-  project_id                             = module.project.project_id # from tf-mod-azuredevops-project
+  project_id                             = module.project.project_id # from terraform-azuredevops-project
   azurerm_spn_tenantid                   = var.tenant_id
   service_endpoint_authentication_scheme = "WorkloadIdentityFederation" # secret-free — preferred
 
@@ -165,7 +165,7 @@ module "azure_endpoints" {
 
 | Input | Type | Source module |
 |---|---|---|
-| `project_id` | `string` | `tf-mod-azuredevops-project` |
+| `project_id` | `string` | `terraform-azuredevops-project` |
 | `azurerm_spn_tenantid` / `azurerm_subscription_id` / … | `string` | Azure subscription facts (often a tfvars or the `azurerm` provider) |
 | `credentials.serviceprincipalid` | `string` | An Entra app registration / managed identity client ID |
 
@@ -174,7 +174,7 @@ module "azure_endpoints" {
 | Output | Description | Consumed by |
 |---|---|---|
 | `id` | Primary resource ID (`azuredevops_serviceendpoint_azurerm`) | downstream module references |
-| `service_endpoint_id` | Resource-specific ID for cross-module wiring | `tf-mod-azuredevops-build-definition`, `tf-mod-azuredevops-environment`, `tf-mod-azuredevops-pipeline-checks`, `tf-mod-azuredevops-serviceendpoint-permissions` |
+| `service_endpoint_id` | Resource-specific ID for cross-module wiring | `terraform-azuredevops-build-definition`, `terraform-azuredevops-environment`, `terraform-azuredevops-pipeline-checks`, `terraform-azuredevops-serviceendpoint-permissions` |
 | `name` | ARM connection name | logging / audit |
 | `project_id` | Project ID these endpoints belong to (echoed) | downstream convenience |
 | `service_principal_id` | App (client) ID of the ARM SP — **not a secret** | audit, federated-credential wiring |
@@ -193,7 +193,7 @@ module "azure_endpoints" {
 
 ```hcl
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                                   = "casey-prod-arm"
   project_id                             = module.project.project_id
@@ -212,7 +212,7 @@ module "azure_endpoints" {
 
 ```hcl
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                                   = "casey-legacy-arm"
   project_id                             = module.project.project_id
@@ -247,7 +247,7 @@ credentials = {
 
 ```hcl
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                                   = "casey-mi-arm"
   project_id                             = module.project.project_id
@@ -264,7 +264,7 @@ module "azure_endpoints" {
 
 ```hcl
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                                   = "casey-mg-arm"
   project_id                             = module.project.project_id
@@ -284,7 +284,7 @@ module "azure_endpoints" {
 
 ```hcl
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                      = "casey-prod-arm"
   project_id                = module.project.project_id
@@ -304,7 +304,7 @@ module "azure_endpoints" {
 
 ```hcl
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                      = "casey-gov-arm"
   project_id                = module.project.project_id
@@ -321,7 +321,7 @@ module "azure_endpoints" {
 
 ```hcl
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                      = "casey-prod-arm"
   project_id                = module.project.project_id
@@ -375,7 +375,7 @@ azurecr_endpoints = {
 
 ```hcl
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                      = "casey-prod-arm"
   project_id                = module.project.project_id
@@ -419,12 +419,12 @@ service_bus_endpoints = {
 
 ```hcl
 module "project" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-project?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-project?ref=v1.0.0"
   name   = "Payments-Platform"
 }
 
 module "azure_endpoints" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
 
   name                      = "payments-prod-arm"
   project_id                = module.project.project_id # the canonical wire-in
@@ -440,7 +440,7 @@ module "azure_endpoints" {
 
 ```hcl
 module "azure_endpoints" {
-  source                    = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source                    = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
   name                      = "payments-prod-arm"
   project_id                = module.project.project_id
   azurerm_spn_tenantid      = var.tenant_id
@@ -449,7 +449,7 @@ module "azure_endpoints" {
 }
 
 module "pipeline_checks" {
-  source               = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-pipeline-checks?ref=v1.0.0"
+  source               = "git::https://github.com/microsoftexpert/terraform-azuredevops-pipeline-checks?ref=v1.0.0"
   project_id           = module.project.project_id
   target_resource_id   = module.azure_endpoints.service_endpoint_id # upstream output → input
   target_resource_type = "endpoint"
@@ -463,7 +463,7 @@ module "pipeline_checks" {
 
 ```hcl
 module "azure_endpoints" {
-  source                                 = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source                                 = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
   name                                   = "casey-prod-arm"
   project_id                             = module.project.project_id
   azurerm_spn_tenantid                   = var.tenant_id
@@ -493,13 +493,13 @@ resource "azurerm_federated_identity_credential" "deploy" {
 ```hcl
 # 1) Foundation — the project everything wires into
 module "project" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-project?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-azuredevops-project?ref=v1.0.0"
   name   = "Payments-Platform"
 }
 
 # 2) THIS MODULE — the Azure family of service connections
 module "azure_endpoints" {
-  source                                 = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-serviceendpoint-azure?ref=v1.0.0"
+  source                                 = "git::https://github.com/microsoftexpert/terraform-azuredevops-serviceendpoint-azure?ref=v1.0.0"
   name                                   = "payments-prod-arm"
   project_id                             = module.project.project_id
   azurerm_spn_tenantid                   = var.tenant_id
@@ -528,7 +528,7 @@ module "azure_endpoints" {
 
 # 3) Consumer — a build/pipeline definition that uses the ARM + ACR connections
 module "build" {
-  source              = "git::https://github.com/microsoftexpert/tf-mod-azuredevops-build-definition?ref=v1.0.0"
+  source              = "git::https://github.com/microsoftexpert/terraform-azuredevops-build-definition?ref=v1.0.0"
   project_id          = module.project.project_id
   name                = "payments-ci"
   service_connections = module.azure_endpoints.service_endpoint_ids # all endpoints in one map
@@ -550,7 +550,7 @@ output "arm_service_endpoint_id" {
 | Name | Type | Default | Required | Sensitive | Description |
 |---|---|---|:--:|:--:|---|
 | `name` | `string` | — | ✅ | — | ARM connection name (the keystone `service_endpoint_name`). |
-| `project_id` | `string` | — | ✅ | — | Project ID. **IMMUTABLE** — wire from `tf-mod-azuredevops-project`. |
+| `project_id` | `string` | — | ✅ | — | Project ID. **IMMUTABLE** — wire from `terraform-azuredevops-project`. |
 | `azurerm_spn_tenantid` | `string` | — | ✅ | — | Entra tenant ID of the identity backing the ARM connection. |
 | `service_endpoint_authentication_scheme` | `string` | `"ServicePrincipal"` | — | — | `ServicePrincipal` \| `WorkloadIdentityFederation` \| `ManagedServiceIdentity`. |
 | `description` | `string` | `"Managed by Terraform"` | — | — | ARM connection description. |
@@ -640,7 +640,7 @@ map(object({
 - **Immutable fields.** `project_id`, `environment`, and `server_url` force destroy/recreate on change.
 - **Scope is exclusive.** Provide either a subscription scope **or** a management-group scope on the ARM endpoint — the provider rejects neither-or-both at apply.
 - **Eventual consistency.** Azure DevOps is distributed; a freshly created endpoint can take a moment to be readable. A re-`plan`/`apply` resolves transient `404`/not-found races.
-- **Pipeline authorization is separate.** Allowing a pipeline to *use* an endpoint (`azuredevops_pipeline_authorization`) and protecting it with approvals/checks (`tf-mod-azuredevops-pipeline-checks`) are deliberately out of scope — wire `service_endpoint_id` into those modules.
+- **Pipeline authorization is separate.** Allowing a pipeline to *use* an endpoint (`azuredevops_pipeline_authorization`) and protecting it with approvals/checks (`terraform-azuredevops-pipeline-checks`) are deliberately out of scope — wire `service_endpoint_id` into those modules.
 - **No process-customization prerequisites, no tags.** This family has none of either.
 
 ---
@@ -659,7 +659,7 @@ map(object({
 ## 🚀 Runbook
 
 ```powershell
-cd C:\GitHubCode\newazuredevopsmodules\tf-mod-azuredevops-serviceendpoint-azure
+cd C:\GitHubCode\newazuredevopsmodules\terraform-azuredevops-serviceendpoint-azure
 terraform init -backend=false
 terraform validate
 terraform fmt -check
@@ -731,7 +731,7 @@ service_bus_endpoint_ids = {
 - 📗 [Service connection security & permissions](https://learn.microsoft.com/azure/devops/pipelines/policies/permissions#set-service-connection-security-in-azure-pipelines)
 - 📗 [Make your Azure DevOps secure — scope service connections](https://learn.microsoft.com/azure/devops/organizations/security/security-overview#scope-service-connections)
 - 📗 [Troubleshoot ARM service connections](https://learn.microsoft.com/azure/devops/pipelines/release/azure-rm-endpoint)
-- 🧩 Sibling modules: `tf-mod-azuredevops-project`, `tf-mod-azuredevops-build-definition`, `tf-mod-azuredevops-environment`, `tf-mod-azuredevops-pipeline-checks`, `tf-mod-azuredevops-serviceendpoint-permissions`, and the other `serviceendpoint_*` families.
+- 🧩 Sibling modules: `terraform-azuredevops-project`, `terraform-azuredevops-build-definition`, `terraform-azuredevops-environment`, `terraform-azuredevops-pipeline-checks`, `terraform-azuredevops-serviceendpoint-permissions`, and the other `serviceendpoint_*` families.
 
 ---
 
